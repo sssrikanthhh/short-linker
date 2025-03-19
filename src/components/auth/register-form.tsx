@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FaGoogle, FaGithub } from "react-icons/fa";
 import { Loader } from "lucide-react";
 
 import { RegisterFormData, registerSchema } from "@/lib/schemas";
@@ -20,7 +18,7 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import FormError from "../form/form-error";
-import { registerUser } from "@/actions/auth";
+import { registerUser } from "@/actions/auth/register-user";
 
 export default function RegisterForm() {
   const router = useRouter();
