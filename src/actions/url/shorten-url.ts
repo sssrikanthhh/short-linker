@@ -1,16 +1,18 @@
-'use server';
+"use server";
 
-import { nanoid } from 'nanoid';
-import { urlSchema } from '@/lib/schemas';
-import { ApiResponse } from '@/lib/types';
-import { ensureHttps } from '@/lib/utils';
-import { prisma } from '@/lib/prisma-client';
-import { ATTEMPTS_LIMIT, BASE_URL } from '@/lib/constants';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath } from "next/cache";
+import { nanoid } from "nanoid";
+
+import { urlSchema } from "@/lib/schemas";
+import { ApiResponse } from "@/lib/types";
+import { ensureHttps } from "@/lib/utils";
+import { prisma } from "@/lib/prisma-client";
+import { ATTEMPTS_LIMIT, BASE_URL } from "@/lib/constants";
+import { auth } from "@/auth";
 
 export async function shortenUrl(
   formData: FormData,
-  attempts = 0
+  attempts = 0,
 ): Promise<
   ApiResponse<{
     shortUrl: string;
@@ -20,21 +22,23 @@ export async function shortenUrl(
   if (attempts > ATTEMPTS_LIMIT) {
     return {
       success: false,
-      error: 'Failed to shorten URL, please try again.'
+      error: "Failed to shorten URL, please try again.",
     };
   }
 
   try {
-    const url = formData.get('url') as string;
+    const session = await auth();
+    const userId = session?.user?.id;
+    const url = formData.get("url") as string;
 
     const validatedData = urlSchema.safeParse({
-      url
+      url,
     });
     if (!validatedData.success) {
       return {
         success: false,
         error:
-          validatedData.error.flatten().fieldErrors.url?.[0] || 'Invalid URL'
+          validatedData.error.flatten().fieldErrors.url?.[0] || "Invalid URL",
       };
     }
 
@@ -43,8 +47,8 @@ export async function shortenUrl(
 
     const existingCode = await prisma.url.findUnique({
       where: {
-        shortCode
-      }
+        shortCode,
+      },
     });
     //if the code exists, recursively call the function to generate a new code
     if (existingCode) {
@@ -54,22 +58,23 @@ export async function shortenUrl(
     await prisma.url.create({
       data: {
         originalUrl,
-        shortCode
-      }
+        shortCode,
+        userId: userId || null,
+      },
     });
 
-    revalidatePath('/');
+    revalidatePath("/");
 
     return {
       success: true,
       data: {
-        shortUrl: `${BASE_URL}/sl/${shortCode}`
-      }
+        shortUrl: `${BASE_URL}/sl/${shortCode}`,
+      },
     };
   } catch (error) {
     return {
       success: false,
-      error: 'Failed to shorten URL, please try again.'
+      error: "Failed to shorten URL, please try again.",
     };
   }
 }
