@@ -9,6 +9,7 @@ import { ensureHttps } from "@/lib/utils";
 import { prisma } from "@/lib/prisma-client";
 import { ATTEMPTS_LIMIT, BASE_URL } from "@/lib/constants";
 import { auth } from "@/auth";
+import { checkUrlSafety } from "./check-url-safety";
 
 export async function shortenUrl(
   formData: FormData,
@@ -16,6 +17,9 @@ export async function shortenUrl(
 ): Promise<
   ApiResponse<{
     shortUrl: string;
+    flagged: boolean;
+    flagReason?: string | null;
+    message?: string;
   }>
 > {
   //handling the edge case nanoid creating duplicates(unlikely) and preventing stack overflow
@@ -47,6 +51,27 @@ export async function shortenUrl(
     }
 
     const originalUrl = ensureHttps(validatedData.data.url);
+
+    const safetyCheck = await checkUrlSafety(originalUrl);
+    let flagged = false;
+    let flagReason: string | null = null;
+
+    if (safetyCheck.success && safetyCheck.data) {
+      flagged = safetyCheck.data.flagged;
+      flagReason = safetyCheck.data.reason;
+
+      if (
+        safetyCheck.data.category === "malicious" &&
+        safetyCheck.data.confidence > 0.7 &&
+        session?.user?.role !== "ADMIN"
+      ) {
+        return {
+          success: false,
+          error: "This URL is marked as malicious.",
+        };
+      }
+    }
+
     const shortCode = validatedData.data.customCode || nanoid(8);
 
     const existingCode = await prisma.url.findUnique({
@@ -69,6 +94,8 @@ export async function shortenUrl(
         originalUrl,
         shortCode,
         userId: userId || null,
+        flagged,
+        flagReason,
       },
     });
 
@@ -78,6 +105,11 @@ export async function shortenUrl(
       success: true,
       data: {
         shortUrl: `${BASE_URL}/sl/${shortCode}`,
+        flagged,
+        flagReason,
+        message: flagged
+          ? "URL flagged as unsafe and suspicious by our system, It may be temporarily limited until further review by the administrator."
+          : undefined,
       },
     };
   } catch (error) {
