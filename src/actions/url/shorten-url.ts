@@ -30,20 +30,24 @@ export async function shortenUrl(
     const session = await auth();
     const userId = session?.user?.id;
     const url = formData.get("url") as string;
+    const customCode = formData.get("customCode") as string;
 
     const validatedData = urlSchema.safeParse({
       url,
+      customCode: customCode || undefined,
     });
     if (!validatedData.success) {
       return {
         success: false,
         error:
-          validatedData.error.flatten().fieldErrors.url?.[0] || "Invalid URL",
+          validatedData.error.flatten().fieldErrors.url?.[0] ||
+          validatedData.error.flatten().fieldErrors.customCode?.[0] ||
+          "Invalid URL or custom code",
       };
     }
 
     const originalUrl = ensureHttps(validatedData.data.url);
-    const shortCode = nanoid(8);
+    const shortCode = validatedData.data.customCode || nanoid(8);
 
     const existingCode = await prisma.url.findUnique({
       where: {
@@ -52,6 +56,11 @@ export async function shortenUrl(
     });
     //if the code exists, recursively call the function to generate a new code
     if (existingCode) {
+      if (validatedData.data.customCode)
+        return {
+          success: false,
+          error: "Custom code is already taken, please choose another one.",
+        };
       return await shortenUrl(formData, attempts + 1);
     }
 
