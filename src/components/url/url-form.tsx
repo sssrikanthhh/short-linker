@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Copy, Loader } from "lucide-react";
+import { Copy, Loader, QrCode } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import {
   Form,
@@ -17,16 +20,25 @@ import { Button } from "@/components/ui/button";
 import { UrlFormData, urlSchema } from "@/lib/schemas";
 import { shortenUrl } from "@/actions/url/shorten-url";
 import { Card, CardContent } from "../ui/card";
+import FormError from "../form/form-error";
+import QrCodeModal from "../modals/qr-code-modal";
 
 export default function UrlForm() {
   const [shortUrl, setShortUrl] = useState<string | null>(null);
   const [shortCode, setShortCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isQrCodeModalOpen, setIsQrCodeModalOpen] = useState(false);
+
+  const { data: session } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const form = useForm<UrlFormData>({
     resolver: zodResolver(urlSchema),
     defaultValues: {
       url: "",
+      customCode: "",
     },
   });
 
@@ -39,14 +51,21 @@ export default function UrlForm() {
       const formData = new FormData();
       formData.append("url", data.url);
 
+      if (data.customCode && data.customCode.trim() !== "") {
+        formData.append("customCode", data.customCode.trim());
+      }
+
       const response = await shortenUrl(formData);
       if (response.success && response.data) {
         setShortUrl(response.data.shortUrl);
         // Extract the short code from the short URL
-        const shortCode = response.data.shortUrl.match(/\/r\/([^/]+)$/);
-        if (shortCode && shortCode[1]) {
-          setShortCode(shortCode[1]);
+        const shortCodeMatch = response.data.shortUrl.match(/\/sl\/([^/]+)$/);
+        if (shortCodeMatch && shortCodeMatch[1]) {
+          setShortCode(shortCodeMatch[1]);
         }
+      }
+      if (session?.user && pathname.includes("/dashboard")) {
+        router.refresh();
       }
     } catch (error) {
       setError("An error occurred, try again.");
@@ -59,11 +78,17 @@ export default function UrlForm() {
     if (!shortUrl) return;
     try {
       await navigator.clipboard.writeText(shortUrl);
+      toast("Copied to clipboard.");
     } catch (error) {
       console.error("Failed to copy: ", error);
     }
   };
 
+  const showQrCode = () => {
+    if (!shortUrl || !shortCode) return;
+    console.log("test");
+    setIsQrCodeModalOpen(true);
+  };
   return (
     <>
       <div className="mx-auto w-full max-w-2xl">
@@ -99,11 +124,37 @@ export default function UrlForm() {
               </Button>
             </div>
 
-            {error && (
-              <div className="bg-destructive/10 text-destructive rounded-sm p-3">
-                <span>{error}</span>
-              </div>
-            )}
+            <FormField
+              name="customCode"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="flex items-center gap-0.5">
+                      <span className="text-muted-foreground text-sm">
+                        {process.env.NEXT_PUBLIC_APP_URL ||
+                          window.location.origin}
+                        /sl/
+                      </span>
+                      <Input
+                        placeholder="Enter your custom code(optional)"
+                        {...field}
+                        type="text"
+                        onChange={(e) => {
+                          field.onChange(e.target.value || "");
+                        }}
+                        value={field.value || ""}
+                        disabled={isLoading}
+                        className="flex-1"
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormError message={error as string} />
 
             {shortUrl && (
               <Card>
@@ -127,7 +178,18 @@ export default function UrlForm() {
                       variant="outline"
                     >
                       <Copy className="size-4" />
-                      <span>Copy</span>
+                      <span className="hidden md:block">Copy</span>
+                    </Button>
+                    <Button
+                      onClick={showQrCode}
+                      type="button"
+                      className="flex-shrink-0 cursor-pointer"
+                      title="Generate QR code"
+                      size="sm"
+                      variant="outline"
+                    >
+                      <QrCode className="size-4" />
+                      <span className="hidden md:block">QR Code</span>
                     </Button>
                   </div>
                 </CardContent>
@@ -136,6 +198,14 @@ export default function UrlForm() {
           </form>
         </Form>
       </div>
+      {shortUrl && shortCode && (
+        <QrCodeModal
+          isOpen={isQrCodeModalOpen}
+          onOpenChange={setIsQrCodeModalOpen}
+          url={shortUrl}
+          shortCode={shortCode}
+        />
+      )}
     </>
   );
 }
