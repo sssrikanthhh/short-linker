@@ -12,3 +12,11 @@ export type Url = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type UrlSafetyCheck = {
+  isSafe: boolean;
+  flagged: boolean;
+  reason: string | null;
+  category: "safe" | "suspicious" | "malicious" | "inappropriate" | "unknown";
+  confidence: number;
+};
