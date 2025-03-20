@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ToastProvider from "@/components/providers/toast-provider";
+import AuthProvider from "@/components/providers/auth-provider";
 
 export const metadata: Metadata = {
   title: "Short Linker",
@@ -16,8 +17,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ToastProvider />
-        <main>{children}</main>
+        <AuthProvider>
+          <ToastProvider />
+          <main>{children}</main>
+        </AuthProvider>
       </body>
     </html>
   );
