@@ -23,6 +23,7 @@ import { Card, CardContent } from "../ui/card";
 import FormError from "../form/form-error";
 import QrCodeModal from "../modals/qr-code-modal";
 import { UrlSafetyCheck } from "@/lib/types";
+import AuthSuggestionModal from "../modals/auth-suggestion-modal";
 
 export default function UrlForm() {
   const [shortUrl, setShortUrl] = useState<string | null>(null);
@@ -36,6 +37,7 @@ export default function UrlForm() {
       })
     | null
   >(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const { data: session } = useSession();
   const router = useRouter();
@@ -92,12 +94,16 @@ export default function UrlForm() {
       if (session?.user && pathname.includes("/dashboard")) {
         router.refresh();
       }
+      if (!session?.user) {
+        setShowAuthModal(true);
+      }
     } catch (error) {
       setError("An error occurred, try again.");
     } finally {
       setIsLoading(false);
     }
   };
+  console.log(session);
 
   const copyToClipboard = async () => {
     if (!shortUrl) return;
@@ -111,7 +117,6 @@ export default function UrlForm() {
 
   const showQrCode = () => {
     if (!shortUrl || !shortCode) return;
-    console.log("test");
     setIsQrCodeModalOpen(true);
   };
   return (
@@ -249,6 +254,14 @@ export default function UrlForm() {
           </form>
         </Form>
       </div>
+
+      {/* signup suggestion modal on url generation */}
+      <AuthSuggestionModal
+        isOpen={showAuthModal}
+        onOpenChange={setShowAuthModal}
+        shortUrl={shortUrl || ""}
+      />
+
       {shortUrl && shortCode && (
         <QrCodeModal
           isOpen={isQrCodeModalOpen}
