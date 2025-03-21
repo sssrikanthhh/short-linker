@@ -43,13 +43,19 @@ export default function Header() {
             </Link>
           </Button>
           <Button variant="ghost" size="sm" asChild title="Url Stats">
-            <Link href="/stats" className="flex items-center gap-1">
+            <Link
+              href="/dashboard/sl-stats"
+              className="flex items-center gap-1"
+            >
               <BarChart3Icon className="size-4" />
               <span>Url Stats</span>
             </Link>
           </Button>
           <Button variant="ghost" size="sm" asChild title="My Stats">
-            <Link href="/stats" className="flex items-center gap-1">
+            <Link
+              href="/dashboard/my-stats"
+              className="flex items-center gap-1"
+            >
               <ChartPie className="size-4" />
               <span>My Stats</span>
             </Link>
@@ -92,7 +98,7 @@ export default function Header() {
                 </Button>
                 <Button variant="ghost" asChild title="Url Stats">
                   <Link
-                    href="/stats"
+                    href="/dashboard/sl-stats"
                     className="flex w-full items-center justify-start gap-2"
                   >
                     <BarChart3Icon className="size-4" />
@@ -101,7 +107,7 @@ export default function Header() {
                 </Button>
                 <Button variant="ghost" asChild title="My Stats">
                   <Link
-                    href="/stats"
+                    href="/dashboard/my-stats"
                     className="flex w-full items-center justify-start gap-2"
                   >
                     <ChartPie className="size-4" />
