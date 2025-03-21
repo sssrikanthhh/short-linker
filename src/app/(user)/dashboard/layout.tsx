@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import Header from "@/components/layout/header";
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -14,10 +15,13 @@ export default async function DashboardLayout({
     redirect("/login");
   }
   return (
-    <section className="min-h-[calc[100vh-64px-56px">
-      <div className="container mx-auto max-w-5xl px-4 py-10 md:px-8">
-        {children}
-      </div>
-    </section>
+    <>
+      <Header />
+      <section className="min-h-[calc[100vh-64px-56px">
+        <div className="container mx-auto max-w-5xl px-4 py-10 md:px-8">
+          {children}
+        </div>
+      </section>
+    </>
   );
 }
