@@ -1,3 +1,5 @@
+"use server";
+
 import { auth } from "@/auth";
 import { ApiResponse, Url } from "@/lib/types";
 import { prisma } from "@/lib/prisma-client";
