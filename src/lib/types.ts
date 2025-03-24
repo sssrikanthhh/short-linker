@@ -20,3 +20,20 @@ export type UrlSafetyCheck = {
   category: "safe" | "suspicious" | "malicious" | "inappropriate" | "unknown";
   confidence: number;
 };
+
+export type UrlWithUser = Omit<Url, "updatedAt"> & {
+  userId: string | null;
+  userName: string | null;
+  userEmail: string | null;
+  flagged: boolean;
+  flagReason: string | null;
+};
+
+export type GetAllUrlsParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: "originalUrl" | "shortCode" | "clicks" | "createdAt" | "userName";
+  sortOrder?: "asc" | "desc";
+  filterBy?: "all" | "flagged" | "security" | "inappropriate" | "other";
+};
