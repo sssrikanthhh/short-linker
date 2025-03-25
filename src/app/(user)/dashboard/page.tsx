@@ -11,6 +11,7 @@ import {
 import UrlForm from "@/components/url/url-form";
 import { getUserUrls } from "@/actions/url/get-user-urls";
 import UserUrlsTable from "@/components/url/user-urls-table";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Short Linker | Dashboard",
@@ -56,6 +57,18 @@ export default async function DashboardPage() {
             <UserUrlsTable urls={userUrls} />
           </CardContent>
         </Card>
+
+        {process.env.NODE_ENV === "development" &&
+          session?.user?.role === "ADMIN" && (
+            <div className="mt-4 text-center" title="Admin tools">
+              <Link
+                href="/admin"
+                className="text-muted-foreground hover:text-primary font-medium underline underline-offset-1"
+              >
+                Admin tools
+              </Link>
+            </div>
+          )}
       </div>
     </>
   );
