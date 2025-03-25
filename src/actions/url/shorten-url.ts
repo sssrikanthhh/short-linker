@@ -100,6 +100,7 @@ export async function shortenUrl(
     });
 
     revalidatePath("/");
+    revalidatePath("/dashboard");
 
     return {
       success: true,
