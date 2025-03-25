@@ -19,6 +19,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "../ui/sheet";
+import { ThemeToggle } from "../ui/theme-toggle";
 
 export default function Header() {
   const { data: session, status } = useSession();
@@ -36,6 +37,7 @@ export default function Header() {
 
         {/* desktop nav */}
         <nav className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
           <Button variant="ghost" size="sm" asChild title="Dashboard">
             <Link href="/dashboard" className="flex items-center gap-1">
               <LayoutDashboard className="size-4" />
@@ -43,10 +45,7 @@ export default function Header() {
             </Link>
           </Button>
           <Button variant="ghost" size="sm" asChild title="Url Stats">
-            <Link
-              href="/dashboard/sl-stats"
-              className="flex items-center gap-1"
-            >
+            <Link href="/stats" className="flex items-center gap-1">
               <BarChart3Icon className="size-4" />
               <span>Url Stats</span>
             </Link>
@@ -98,7 +97,7 @@ export default function Header() {
                 </Button>
                 <Button variant="ghost" asChild title="Url Stats">
                   <Link
-                    href="/dashboard/sl-stats"
+                    href="/stats"
                     className="flex w-full items-center justify-start gap-2"
                   >
                     <BarChart3Icon className="size-4" />
